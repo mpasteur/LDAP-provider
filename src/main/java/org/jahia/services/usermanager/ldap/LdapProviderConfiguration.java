@@ -5,7 +5,7 @@
  *
  *                                 http://www.jahia.com
  *
- *     Copyright (C) 2002-2016 Jahia Solutions Group SA. All rights reserved.
+ *     Copyright (C) 2002-2017 Jahia Solutions Group SA. All rights reserved.
  *
  *     THIS FILE IS AVAILABLE UNDER TWO DIFFERENT LICENSES:
  *     1/GPL OR 2/JSEL
@@ -95,11 +95,15 @@ public class LdapProviderConfiguration implements UserGroupProviderConfiguration
         
         return value;
     }
-    
-    private String userGroupProviderClass;
+
     private ExternalUserGroupService externalUserGroupService;
     private JahiaLDAPConfigFactory jahiaLDAPConfigFactory;
     private ConfigurationAdmin configurationAdmin;
+
+    @Override
+    public String getProviderClass() {
+        return "org.jahia.services.usermanager.ldap.LDAPUserGroupProvider";
+    }
 
     @Override
     public String getName() {
@@ -292,14 +296,6 @@ public class LdapProviderConfiguration implements UserGroupProviderConfiguration
             throw getRootCause(e);
         }
         return true;
-    }
-
-    public void init() {
-        externalUserGroupService.setConfiguration(userGroupProviderClass, this);
-    }
-
-    public void setUserGroupProviderClass(String userGroupProviderClass) {
-        this.userGroupProviderClass = userGroupProviderClass;
     }
 
     public void setExternalUserGroupService(ExternalUserGroupService externalUserGroupService) {

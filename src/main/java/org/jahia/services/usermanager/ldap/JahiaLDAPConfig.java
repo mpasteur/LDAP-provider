@@ -5,7 +5,7 @@
  *
  *                                 http://www.jahia.com
  *
- *     Copyright (C) 2002-2016 Jahia Solutions Group SA. All rights reserved.
+ *     Copyright (C) 2002-2017 Jahia Solutions Group SA. All rights reserved.
  *
  *     THIS FILE IS AVAILABLE UNDER TWO DIFFERENT LICENSES:
  *     1/GPL OR 2/JSEL
@@ -64,6 +64,7 @@ import org.springframework.ldap.pool.factory.PoolingContextSource;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import org.springframework.ldap.pool.validation.DefaultDirContextValidator;
 
 /**
  * Helper class to configure LDAP user and group providers via OSGi Config Admin service.
@@ -142,10 +143,12 @@ public class JahiaLDAPConfig {
             }
 
             Map<String, Object> publicEnv = new HashMap<>();
-            if (POOL_LDAP.equalsIgnoreCase(userConfig.getLdapConnectPool())) {
+            if (POOL_LDAP.equalsIgnoreCase(userConfig.getLdapConnectPool()) || Boolean.valueOf(userConfig.getLdapConnectPool())) {
                 lcs.setPooled(true);
-                publicEnv.put("com.sun.jndi.ldap.connect.pool.authentication", "none simple");
-                if (userConfig.getLdapConnectPoolTimeout() != null && Long.valueOf(userConfig.getLdapConnectTimeout()) > 0) {
+                if (userConfig.getLdapConnectPoolAuthentication() != null) {
+                    publicEnv.put("com.sun.jndi.ldap.connect.pool.authentication", userConfig.getLdapConnectPoolAuthentication());
+                }
+                if (userConfig.getLdapConnectPoolTimeout() != null && Long.valueOf(userConfig.getLdapConnectPoolTimeout()) > 0) {
                     publicEnv.put("com.sun.jndi.ldap.connect.pool.timeout", userConfig.getLdapConnectPoolTimeout());
                 }
                 if (userConfig.getLdapConnectPoolDebug() != null) {
@@ -160,6 +163,10 @@ public class JahiaLDAPConfig {
                 if (userConfig.getLdapConnectPoolPrefSize() != null) {
                     publicEnv.put("com.sun.jndi.ldap.connect.pool.prefsize", userConfig.getLdapConnectPoolPrefSize());
                 }
+
+                logger.info("Using built-in Java LDAP connection pooling with {} maximum active connections",
+                        userConfig.getLdapConnectPoolMaxSize() != null ? userConfig.getLdapConnectPoolMaxSize()
+                                : "unlimited");
             }
             if (userConfig.getLdapReadTimeout() != null) {
                 publicEnv.put("com.sun.jndi.ldap.read.timeout", userConfig.getLdapReadTimeout());
@@ -179,6 +186,7 @@ public class JahiaLDAPConfig {
             if (POOL_APACHE_COMMONS.equalsIgnoreCase(userConfig.getLdapConnectPool())) {
                 PoolingContextSource poolingContextSource = new PoolingContextSource();
                 poolingContextSource.setContextSource(lcs);
+                poolingContextSource.setDirContextValidator(new DefaultDirContextValidator());
                 if (userConfig.getLdapConnectPoolMaxActive() != null) {
                     poolingContextSource.setMaxActive(userConfig.getLdapConnectPoolMaxActive());
                 }
@@ -221,6 +229,10 @@ public class JahiaLDAPConfig {
                 }
 
                 ldap = new LdapTemplate(poolingContextSource);
+                
+                logger.info(
+                        "Using LDAP connection pooling based on Apache Commons Pool with {} maximum active connections",
+                        poolingContextSource.getMaxActive());
             } else {
                 ldap = new LdapTemplate(lcs);
             }
@@ -246,7 +258,7 @@ public class JahiaLDAPConfig {
             }
             ldapUserGroupProvider.setLdapTemplateWrapper(new LdapTemplateWrapper(ldap));
             ldapUserGroupProvider.setContextSource(lcs);
-
+            ldapUserGroupProvider.setMaxLdapTimeoutCountBeforeDisconnect(userConfig.getMaxLdapTimeoutCountBeforeDisconnect());
             // Activate (again).
             ldapUserGroupProvider.register();
 

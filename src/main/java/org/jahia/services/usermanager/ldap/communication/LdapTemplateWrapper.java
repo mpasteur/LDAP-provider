@@ -5,7 +5,7 @@
  *
  *                                 http://www.jahia.com
  *
- *     Copyright (C) 2002-2016 Jahia Solutions Group SA. All rights reserved.
+ *     Copyright (C) 2002-2017 Jahia Solutions Group SA. All rights reserved.
  *
  *     THIS FILE IS AVAILABLE UNDER TWO DIFFERENT LICENSES:
  *     1/GPL OR 2/JSEL
@@ -59,7 +59,9 @@ public class LdapTemplateWrapper {
 
     public <X> X execute(LdapTemplateCallback<X> callback) {
         try {
-            return callback.doInLdap(ldapTemplate);
+            X x = callback.doInLdap(ldapTemplate);
+            callback.onSuccess();
+            return x;
         } catch (Exception e) {
             return callback.onError(e);
         }

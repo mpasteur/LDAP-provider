@@ -5,7 +5,7 @@
  *
  *                                 http://www.jahia.com
  *
- *     Copyright (C) 2002-2016 Jahia Solutions Group SA. All rights reserved.
+ *     Copyright (C) 2002-2017 Jahia Solutions Group SA. All rights reserved.
  *
  *     THIS FILE IS AVAILABLE UNDER TWO DIFFERENT LICENSES:
  *     1/GPL OR 2/JSEL
@@ -55,7 +55,8 @@ import java.util.Set;
  */
 public abstract class AbstractConfig {
     private static final int DEFAULT_SEARCH_COUNT_LIMIT = 100;
-    
+    private static final int DEFAULT_MAX_TIMEOUT_COUNT = 3;
+
     private String url;
     private String publicBindDn;
     private String publicBindPassword;
@@ -67,6 +68,7 @@ public abstract class AbstractConfig {
     private String ldapConnectTimeout = "5000";
     private String ldapReadTimeout = "5000";
 
+    private String ldapConnectPoolAuthentication = "none simple";
     private String ldapConnectPoolTimeout;
     private String ldapConnectPoolDebug;
     private String ldapConnectPoolInitSize;
@@ -85,8 +87,13 @@ public abstract class AbstractConfig {
     private Boolean ldapConnectPoolTestWhileIdle;
     private Long ldapConnectPoolTimeBetweenEvictionRunsMillis;
     private String ldapConnectPoolWhenExhaustedAction;
+    private int maxLdapTimeoutCountBeforeDisconnect = DEFAULT_MAX_TIMEOUT_COUNT;
 
     private long searchCountlimit = DEFAULT_SEARCH_COUNT_LIMIT;
+    /**
+     * Fixed query filter that is used when searching for users/groups to filter out "unwanted" entries.
+     */
+    private String searchFilter;
     private String searchObjectclass;
     private boolean searchAttributeInDn = false;
     private boolean canGroupContainSubGroups = false;
@@ -157,6 +164,14 @@ public abstract class AbstractConfig {
 
     public void setLdapReadTimeout(String ldapReadTimeout) {
         this.ldapReadTimeout = ldapReadTimeout;
+    }
+
+    public String getLdapConnectPoolAuthentication() {
+        return ldapConnectPoolAuthentication;
+    }
+
+    public void setLdapConnectPoolAuthentication(String ldapConnectPoolAuthentication) {
+        this.ldapConnectPoolAuthentication = ldapConnectPoolAuthentication;
     }
 
     public String getLdapConnectPoolTimeout() {
@@ -295,6 +310,14 @@ public abstract class AbstractConfig {
         this.ldapConnectPoolWhenExhaustedAction = ldapConnectPoolWhenExhaustedAction;
     }
 
+    public int getMaxLdapTimeoutCountBeforeDisconnect() {
+        return maxLdapTimeoutCountBeforeDisconnect;
+    }
+
+    public void setMaxLdapTimeoutCountBeforeDisconnect(int maxLdapTimeoutCountBeforeDisconnect) {
+        this.maxLdapTimeoutCountBeforeDisconnect = maxLdapTimeoutCountBeforeDisconnect;
+    }
+
     public long getSearchCountlimit() {
         return searchCountlimit;
     }
@@ -349,5 +372,24 @@ public abstract class AbstractConfig {
 
     public void setTargetSite(String targetSite) {
         this.targetSite = targetSite;
+    }
+
+    /**
+     * Returns fixed query filter that is used when searching for users/groups to filter out "unwanted" entries.
+     * 
+     * @return fixed query filter that is used when searching for users/groups to filter out "unwanted" entries
+     */
+    public String getSearchFilter() {
+        return searchFilter;
+    }
+
+    /**
+     * Sets the fixed query filter for search.
+     * 
+     * @param searchFilter string in LDAP filter format
+     * @see #getSearchFilter()
+     */
+    public void setSearchFilter(String searchFilter) {
+        this.searchFilter = (searchFilter != null && searchFilter.length() > 0 ? searchFilter : null);
     }
 }
